@@ -4,6 +4,8 @@ A Chrome extension that converts any webpage into clean, well-structured Markdow
 
 **[Download latest release](https://github.com/idevtim/demarkup/releases/latest)**
 
+![DeMarkup popup](images/screenshot.png)
+
 ## Features
 
 - **One-click conversion** — click the icon or press `Ctrl+Shift+M` / `Cmd+Shift+M`
