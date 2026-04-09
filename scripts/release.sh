@@ -5,6 +5,16 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
+# ─── Load credentials from .env ──────────────────────────────────────────────
+if [ -f "$PROJECT_DIR/.env" ]; then
+  set -a
+  source "$PROJECT_DIR/.env"
+  set +a
+else
+  echo "❌ .env file not found at $PROJECT_DIR/.env"
+  exit 1
+fi
+
 # ─── Read version from manifest.json ────────────────────────────────────────
 VERSION=$(grep '"version"' "$PROJECT_DIR/manifest.json" | head -1 | sed 's/.*: *"\(.*\)".*/\1/')
 if [ -z "$VERSION" ]; then

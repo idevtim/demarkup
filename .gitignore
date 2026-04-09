@@ -26,4 +26,3 @@ web-ext-artifacts/
 
 # Environment / secrets
 .env
-.env.*
