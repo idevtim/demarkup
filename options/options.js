@@ -1,6 +1,6 @@
 const defaults = {
   includeMetadata: false,
-  includeLlmContext: false,
+  includeLlmContext: true,
   bulletStyle: '-',
   headingStyle: 'atx',
   linkStyle: 'inlined'
@@ -44,3 +44,33 @@ for (const key of fields) {
     });
   });
 }
+
+// Debug log export
+const exportLogsBtn = document.getElementById('export-logs-btn');
+const clearLogsBtn = document.getElementById('clear-logs-btn');
+
+exportLogsBtn.addEventListener('click', () => {
+  chrome.runtime.sendMessage({ action: 'exportLogs' }, (logData) => {
+    const json = JSON.stringify(logData, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `demarkup-logs-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+});
+
+clearLogsBtn.addEventListener('click', () => {
+  if (confirm('Clear all debug logs?')) {
+    chrome.runtime.sendMessage({ action: 'clearLogs' }, () => {
+      savedMsg.textContent = 'Logs cleared';
+      savedMsg.classList.remove('hidden');
+      setTimeout(() => {
+        savedMsg.classList.add('hidden');
+        savedMsg.textContent = 'Settings saved';
+      }, 1500);
+    });
+  }
+});

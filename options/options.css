@@ -211,3 +211,38 @@ a:hover {
   opacity: 0;
   pointer-events: none;
 }
+
+/* ── Log Actions ── */
+.log-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.log-btn {
+  padding: 8px 16px;
+  border: 1px solid var(--ink-lighter);
+  border-radius: 6px;
+  background: var(--ink-light);
+  color: var(--parchment-dim);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.log-btn:hover {
+  background: var(--ink-lighter);
+  color: var(--parchment);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.log-btn-danger {
+  color: var(--parchment-faint);
+}
+
+.log-btn-danger:hover {
+  border-color: rgba(212, 96, 74, 0.4);
+  color: #d4604a;
+}

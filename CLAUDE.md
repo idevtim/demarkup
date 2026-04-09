@@ -9,6 +9,7 @@ A Chrome extension (Manifest V3) that converts webpages to clean Markdown using 
 - `popup/popup.js` — UI controller for copy/download, mode toggles, stats display
 - `options/options.js` — settings persistence via Chrome storage sync API
 - `lib/turndown.js` + `lib/turndown-plugin-gfm.js` — vendored libraries (do not edit)
+- `lib/logger.js` — debug logging stored in `chrome.storage.local`, exportable from options page
 
 ## Conventions
 

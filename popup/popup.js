@@ -12,17 +12,28 @@ const tokenCount = document.getElementById('token-count');
 let currentMode = 'main';
 let lastResult = null;
 
+// Restore last-used mode
+chrome.storage.sync.get({ conversionMode: 'main' }, (items) => {
+  currentMode = items.conversionMode;
+  if (currentMode === 'full') {
+    modeFull.classList.add('active');
+    modeMain.classList.remove('active');
+  }
+});
+
 // Mode toggle
 modeMain.addEventListener('click', () => {
   currentMode = 'main';
   modeMain.classList.add('active');
   modeFull.classList.remove('active');
+  chrome.storage.sync.set({ conversionMode: 'main' });
 });
 
 modeFull.addEventListener('click', () => {
   currentMode = 'full';
   modeFull.classList.add('active');
   modeMain.classList.remove('active');
+  chrome.storage.sync.set({ conversionMode: 'full' });
 });
 
 // Settings

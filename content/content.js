@@ -268,6 +268,18 @@ function cleanContent(container, aggressive) {
       }
     }
 
+    // Remove javascript: links (UI-only actions, not real navigation)
+    var jsLinks = container.querySelectorAll('a[href^="javascript:"]');
+    for (var ji = 0; ji < jsLinks.length; ji++) {
+      var jsText = jsLinks[ji].textContent.trim();
+      if (jsText) {
+        var textNode = document.createTextNode(jsText);
+        jsLinks[ji].parentNode.replaceChild(textNode, jsLinks[ji]);
+      } else {
+        jsLinks[ji].remove();
+      }
+    }
+
     // Unwrap tracking/redirect URLs (e.g., linkedin.com/safety/go/?url=...)
     var allLinks = container.querySelectorAll('a[href]');
     for (var ri = 0; ri < allLinks.length; ri++) {
@@ -319,30 +331,107 @@ function optimizeForLlm(markdown) {
   // Remove all images (LLMs can't see them, and CDN URLs waste tokens)
   markdown = markdown.replace(/!\[[^\]]*\]\([^)]*\)\s*/g, '');
 
+  // Remove empty links [](url) before collapsing multi-line ones
+  markdown = markdown.replace(/\[\s*\]\([^)]*\)\s*/g, '');
+
+  // Collapse multi-line links: [\n\ntext\n\n](url) → [text](url)
+  markdown = markdown.replace(/\[\s*\n+([\s\S]*?)\n+\s*\]\(/g, function(match, text) {
+    var collapsed = text.replace(/\s*\n\s*/g, ' ').trim();
+    if (!collapsed) return ''; // Remove if text collapsed to nothing
+    return '[' + collapsed + '](';
+  });
+
+  // Remove empty links again (may have been created by collapse)
+  markdown = markdown.replace(/\[\s*\]\([^)]*\)\s*/g, '');
+
   // Remove links that wrap entire paragraphs (keep just the text)
-  // Matches [text](url) where text is > 80 chars (likely a paragraph-as-link)
   markdown = markdown.replace(/\[([^\]]{80,})\]\([^)]*\)/g, '$1');
 
   // Remove bold/italic from hashtags: **#Tag** or *#Tag* → #Tag
   markdown = markdown.replace(/\*{1,2}(#\w+)\*{1,2}/g, '$1');
 
-  // Remove links around short text that are just site-internal navigation
-  // (e.g., follower counts, company names linking to their pages)
-  markdown = markdown.replace(/\[([^\]]{1,40})\]\(https?:\/\/www\.linkedin\.com\/(?:search|feed|company|in\/)[^)]*\)/g, '$1');
+  // Remove javascript:; links entirely (UI-only buttons)
+  markdown = markdown.replace(/\[([^\]]*)\]\(javascript:[^)]*\)/g, '$1');
+
+  // Remove all LinkedIn internal links (keep text only)
+  markdown = markdown.replace(/\[([^\]]*)\]\(https?:\/\/(?:www\.)?linkedin\.com\/(?:search|feed|company|in\/|mynetwork|analytics|dashboard|jobs|overlay)[^)]*\)/g, '$1');
 
   // Collapse sequences of hashtags into a single line
   markdown = markdown.replace(/(#\w+\s*){3,}/g, function(match) {
     return match.replace(/\s+/g, ' ').trim() + '\n';
   });
 
-  // Remove orphaned link reference definitions with no meaningful text
+  // Remove orphaned link reference definitions
   markdown = markdown.replace(/^\s*\[[^\]]*\]:\s*https?:\/\/\S+\s*$/gm, '');
 
   // Remove lines that are just a URL (no context)
   markdown = markdown.replace(/^\s*https?:\/\/\S+\s*$/gm, '');
 
-  // Clean up excessive blank lines left behind
+  // Remove follower/connection count lines
+  markdown = markdown.replace(/^\s*[\d,]+\s+followers?\s*$/gm, '');
+  markdown = markdown.replace(/^\s*\d+\+?\s+connections?\s*$/gm, '');
+
+  // Remove timestamp lines (1mo •, 2yr •, etc.)
+  markdown = markdown.replace(/^\s*\d+\s*(mo|yr|wk|hr|d)\s*•?\s*$/gm, '');
+
+  // Remove orphan characters (lone ·, +N, bullet noise)
+  markdown = markdown.replace(/^\s*·\s*$/gm, '');
+  markdown = markdown.replace(/^\s*\+\d+\s*$/gm, '');
+
+  // Remove endorsement lines
+  markdown = markdown.replace(/^\s*Endorsed by.*$/gm, '');
+  markdown = markdown.replace(/^\s*\d+\s*endorsements?.*$/gm, '');
+
+  // Remove site-name-only lines (e.g., "lunodb.app" on its own)
+  markdown = markdown.replace(/^\s*[a-z0-9.-]+\.(com|app|io|org|net|dev)\s*$/gm, '');
+
+  // Remove skill association noise ("and +1 skill", "and +3 skills")
+  markdown = markdown.replace(/,?\s*and \+\d+ skills?\s*/g, '');
+
+  // Remove list items that are just captions metadata
+  markdown = markdown.replace(/^-\s*,\s*(selected|opens\s.*)\s*$/gm, '');
+
+  // Remove empty list items and nested empty bullets (- followed by only whitespace or sub-bullets)
+  markdown = markdown.replace(/^-\s*\n\s*\n/gm, '');
+  markdown = markdown.replace(/^-\s*$/gm, '');
+  // Collapse chains of empty nested list markers: -   -   -   -   Text → - Text
+  markdown = markdown.replace(/^(-\s+){2,}/gm, '- ');
+
+  // Remove list items that are just --- (horizontal rules inside lists)
+  markdown = markdown.replace(/^-\s+---\s*$/gm, '');
+
+  // Remove "There are 0 new alerts." and similar empty-state messages
+  markdown = markdown.replace(/^\s*There are 0 .+$/gm, '');
+
+  // Remove sections that are non-content for LLMs
+  var removeSections = [
+    'Profile language', 'Public profile & URL', 'Who your viewers also viewed',
+    'People you may know', 'You might like', 'Interests', 'Skills'
+  ];
+  for (var i = 0; i < removeSections.length; i++) {
+    var sectionRegex = new RegExp(
+      '(?:^|\\n)(#{1,3}\\s*' + removeSections[i].replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*\\n)[\\s\\S]*?(?=\\n#{1,3}\\s|$)',
+      'i'
+    );
+    markdown = markdown.replace(sectionRegex, '');
+  }
+
+  // Strip leading tabs/spaces from lines (except code blocks)
+  var inCodeBlock = false;
+  var lines = markdown.split('\n');
+  for (var li = 0; li < lines.length; li++) {
+    if (/^```/.test(lines[li].trim())) {
+      inCodeBlock = !inCodeBlock;
+    } else if (!inCodeBlock) {
+      lines[li] = lines[li].replace(/^[\t ]+/, '');
+    }
+  }
+  markdown = lines.join('\n');
+
+  // Clean up excessive blank lines and separators
   markdown = markdown.replace(/\n{3,}/g, '\n\n');
+  markdown = markdown.replace(/(\n---\s*){2,}/g, '\n\n---\n');
+  markdown = markdown.replace(/\n---\s*$/g, '');
 
   return markdown.trim();
 }
@@ -385,8 +474,8 @@ function cleanMarkdown(markdown) {
     /^\s*• \d+(st|nd|rd|th)\s*$/,
     /^\s*\d+\s*(reactions?|comments?|reposts?|likes?)\s*$/i,
     /^\s*.*and \d+ others? reacted\s*$/i,
-    /^\s*\d+ connections? work here\s*$/i,
-    /^\s*\d+ benefits?\s*$/i,
+    /^\s*\d+\s*connections? work here\s*$/i,
+    /^\s*\d+\s*benefits?\s*$/i,
     /^\s*Loaded: \d+(\.\d+)?%\s*$/,
     /^\s*LIVE\s*$/,
     /^\s*\d+x\s*$/,
@@ -396,7 +485,15 @@ function cleanMarkdown(markdown) {
     /^\s*Someone at .+\s*$/i,
     /^\s*Pages for you\s*$/i,
     /^\s*Posts\s*$/,
-    /^\s*Comments\s*$/
+    /^\s*Comments\s*$/,
+    /^\s*·\s*$/,
+    /^\s*\+\d+\s*$/,
+    /^\s*\d+\s*(mo|yr|wk|hr|d)\s*•?\s*$/,
+    /^\s*[\d,]+\s+followers?\s*$/,
+    /^\s*\d+\+?\s+connections?\s*$/,
+    /^\s*Endorsed by\s/i,
+    /^\s*\d+\s*endorsements?\/?/i,
+    /^\s*Past \d+ days?\s*$/i
   ];
 
   for (var i = 0; i < lines.length; i++) {

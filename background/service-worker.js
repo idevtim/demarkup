@@ -1,5 +1,8 @@
+importScripts('../lib/logger.js');
+
 // Context menu setup
 chrome.runtime.onInstalled.addListener(() => {
+  DeMarkupLogger.info('service-worker', 'Extension installed/updated');
   chrome.contextMenus.create({
     id: 'copy-page-markdown',
     title: 'Copy page as Markdown',
@@ -28,7 +31,7 @@ chrome.commands.onCommand.addListener((command, tab) => {
   }
 });
 
-// Handle messages from popup
+// Handle messages from popup and options
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'convert') {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -37,6 +40,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
     });
     return true; // async response
+  }
+
+  if (message.action === 'exportLogs') {
+    DeMarkupLogger.export().then(sendResponse);
+    return true;
+  }
+
+  if (message.action === 'clearLogs') {
+    DeMarkupLogger.clear().then(sendResponse);
+    return true;
   }
 });
 
@@ -54,7 +67,7 @@ async function executeConversion(tab, options) {
       bulletStyle: '-',
       headingStyle: 'atx',
       linkStyle: 'inlined',
-      includeLlmContext: false
+      includeLlmContext: true
     });
 
     // Execute conversion
@@ -64,8 +77,29 @@ async function executeConversion(tab, options) {
       args: [{ ...options, ...settings }]
     });
 
-    return results[0]?.result || { error: 'No result returned' };
+    const result = results[0]?.result || { error: 'No result returned' };
+
+    if (result.error) {
+      DeMarkupLogger.error('service-worker', 'Conversion failed', {
+        error: result.error,
+        url: tab.url,
+        mode: options.mode
+      });
+    } else {
+      DeMarkupLogger.info('service-worker', 'Conversion succeeded', {
+        url: tab.url,
+        mode: options.mode,
+        words: result.stats?.words,
+        chars: result.stats?.chars
+      });
+    }
+
+    return result;
   } catch (err) {
+    DeMarkupLogger.error('service-worker', 'executeConversion threw', {
+      error: err.message,
+      url: tab.url
+    });
     return { error: err.message };
   }
 }
