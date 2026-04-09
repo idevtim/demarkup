@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DeMarkup Settings</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="container">
+    <h1>DeMarkup Settings</h1>
+
+    <section>
+      <h2>Output</h2>
+
+      <label class="toggle-row">
+        <span>Include YAML front matter</span>
+        <input type="checkbox" id="includeMetadata">
+        <span class="toggle-switch"></span>
+      </label>
+      <p class="hint">Prepends title, URL, and date as YAML metadata</p>
+
+      <label class="toggle-row">
+        <span>Copy for LLM mode</span>
+        <input type="checkbox" id="includeLlmContext">
+        <span class="toggle-switch"></span>
+      </label>
+      <p class="hint">Adds page title and URL as context header</p>
+    </section>
+
+    <section>
+      <h2>Markdown Style</h2>
+
+      <div class="field">
+        <label for="bulletStyle">Bullet style</label>
+        <select id="bulletStyle">
+          <option value="-">- (dash)</option>
+          <option value="*">* (asterisk)</option>
+          <option value="+">+ (plus)</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="headingStyle">Heading style</label>
+        <select id="headingStyle">
+          <option value="atx"># ATX headings</option>
+          <option value="setext">Setext (underline)</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="linkStyle">Link style</label>
+        <select id="linkStyle">
+          <option value="inlined">[text](url) inline</option>
+          <option value="referenced">[text][ref] reference</option>
+        </select>
+      </div>
+    </section>
+
+    <section>
+      <h2>Keyboard Shortcut</h2>
+      <p class="hint">
+        The default shortcut is <kbd>Ctrl+Shift+M</kbd> (<kbd>Cmd+Shift+M</kbd> on Mac).
+        <br>To change it, visit <a id="shortcuts-link" href="#">chrome://extensions/shortcuts</a>
+      </p>
+    </section>
+
+    <div id="saved-msg" class="saved-msg hidden">Settings saved</div>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

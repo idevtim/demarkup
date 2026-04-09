@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DeMarkup</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>DeMarkup</h1>
+      <button id="settings-btn" class="icon-btn" title="Settings">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M6.5 1L7.1 3.1C7.4 3.2 7.7 3.3 8 3.5L10 2.5L11.5 4L10.5 6C10.7 6.3 10.8 6.6 10.9 6.9L13 7.5V9.5L10.9 10.1C10.8 10.4 10.7 10.7 10.5 11L11.5 13L10 14.5L8 13.5C7.7 13.7 7.4 13.8 7.1 13.9L6.5 16H4.5L3.9 13.9C3.6 13.8 3.3 13.7 3 13.5L1 14.5L-0.5 13L0.5 11C0.3 10.7 0.2 10.4 0.1 10.1L-2 9.5V7.5L0.1 6.9C0.2 6.6 0.3 6.3 0.5 6L-0.5 4L1 2.5L3 3.5C3.3 3.3 3.6 3.2 3.9 3.1L4.5 1H6.5Z" transform="translate(2.5 0) scale(0.95)" fill="none" stroke="currentColor" stroke-width="1.2"/>
+          <circle cx="8" cy="8.5" r="2" fill="none" stroke="currentColor" stroke-width="1.2"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="toggle-group">
+      <button id="mode-main" class="toggle-btn active">Main Content</button>
+      <button id="mode-full" class="toggle-btn">Full Page</button>
+    </div>
+
+    <div class="actions">
+      <button id="copy-btn" class="primary-btn">
+        <span class="btn-text">Copy as Markdown</span>
+        <span class="btn-success">Copied!</span>
+      </button>
+      <button id="download-btn" class="secondary-btn">
+        <span class="btn-text">Download .md</span>
+        <span class="btn-success">Downloaded!</span>
+      </button>
+    </div>
+
+    <div id="stats" class="stats hidden">
+      <span id="word-count"></span>
+      <span class="sep">&middot;</span>
+      <span id="char-count"></span>
+      <span class="sep">&middot;</span>
+      <span id="token-count"></span>
+    </div>
+
+    <div id="error" class="error hidden"></div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

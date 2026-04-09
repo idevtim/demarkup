@@ -1,0 +1,29 @@
+# Claude Code local overrides
+CLAUDE.local.md
+.claude/settings.local.json
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Node (if added later for dev tooling)
+node_modules/
+npm-debug.log*
+
+# Build/package artifacts
+*.crx
+*.pem
+*.zip
+web-ext-artifacts/
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Environment / secrets
+.env
+.env.*
