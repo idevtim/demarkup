@@ -42,6 +42,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true; // async response
   }
 
+  if (message.action === 'pickElement') {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs[0]) {
+        activatePicker(tabs[0]).then(sendResponse);
+      }
+    });
+    return true;
+  }
+
   if (message.action === 'exportLogs') {
     DeMarkupLogger.export().then(sendResponse);
     return true;
@@ -108,6 +117,55 @@ function runConversion(options) {
   // This runs in the content script context
   if (typeof window.__demarkupConvert === 'function') {
     return window.__demarkupConvert(options);
+  }
+  return { error: 'Content script not loaded' };
+}
+
+async function activatePicker(tab) {
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      files: ['lib/turndown.js', 'lib/turndown-plugin-gfm.js', 'content/content.js']
+    });
+
+    const settings = await chrome.storage.sync.get({
+      includeMetadata: false,
+      bulletStyle: '-',
+      headingStyle: 'atx',
+      linkStyle: 'inlined',
+      includeLlmContext: true
+    });
+
+    const results = await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: runPicker,
+      args: [settings]
+    });
+
+    const result = results[0]?.result || { error: 'No result returned' };
+
+    if (result.error) {
+      DeMarkupLogger.error('service-worker', 'Picker activation failed', {
+        error: result.error,
+        url: tab.url
+      });
+    } else {
+      DeMarkupLogger.info('service-worker', 'Picker activated', { url: tab.url });
+    }
+
+    return result;
+  } catch (err) {
+    DeMarkupLogger.error('service-worker', 'activatePicker threw', {
+      error: err.message,
+      url: tab.url
+    });
+    return { error: err.message };
+  }
+}
+
+function runPicker(options) {
+  if (typeof window.__demarkupPick === 'function') {
+    return window.__demarkupPick(options);
   }
   return { error: 'Content script not loaded' };
 }
