@@ -272,6 +272,7 @@ function convertElementToMarkdown(sourceElement, options, aggressiveClean) {
   const pageTitle = document.title;
   const pageUrl = document.location.href;
 
+  revealHiddenTabs(sourceElement);
   cleanContent(sourceElement, aggressiveClean);
   resolveUrls(sourceElement);
 
@@ -289,19 +290,47 @@ function convertElementToMarkdown(sourceElement, options, aggressiveClean) {
     turndownService.use(turndownPluginGfm.gfm);
   }
 
+  const CODE_CONTAINER_CLASS = /(?:^|\s)(?:code-block|code-editor|prism-code|prism-token|shiki|hljs|highlight|token-line|language-[a-z0-9+_-]+|sl-code-highlight|sl-code-block|sl-code-editor|CodeMirror)(?:\s|$)/i;
+
   turndownService.addRule('fencedCodeBlock', {
     filter: function(node) {
-      return (
-        node.nodeName === 'PRE' &&
-        node.querySelector('code')
-      );
+      if (node.nodeName === 'PRE') return true;
+      if (node.nodeName === 'DIV' || node.nodeName === 'SECTION') {
+        const cls = node.getAttribute('class') || '';
+        if (CODE_CONTAINER_CLASS.test(cls)) {
+          // Skip nested matches — only fence the outermost wrapper
+          let p = node.parentNode;
+          while (p && p.nodeType === 1) {
+            if ((p.nodeName === 'DIV' || p.nodeName === 'SECTION') &&
+                CODE_CONTAINER_CLASS.test(p.getAttribute('class') || '')) {
+              return false;
+            }
+            if (p.nodeName === 'PRE') return false;
+            p = p.parentNode;
+          }
+          return true;
+        }
+      }
+      if (node.nodeName === 'CODE') {
+        const parent = node.parentNode;
+        if (!parent) return false;
+        if (parent.nodeName === 'PRE') return false;
+        if (/^(P|SPAN|LI|H[1-6]|TD|TH|A|EM|STRONG|BUTTON|DT|DD|LABEL)$/.test(parent.nodeName)) return false;
+        return node.textContent.indexOf('\n') >= 0;
+      }
+      return false;
     },
     replacement: function(content, node) {
-      const code = node.querySelector('code');
-      const className = code.getAttribute('class') || '';
-      const langMatch = className.match(/(?:language-|lang-|highlight-)(\w+)/);
+      const inner = node.nodeName === 'PRE' ? (node.querySelector('code') || node) : node;
+      const classes = (node.getAttribute('class') || '') + ' ' + (inner.getAttribute('class') || '');
+      const langMatch = classes.match(/(?:language-|lang-|highlight-)([a-z0-9+_-]+)/i);
       const lang = langMatch ? langMatch[1] : '';
-      const text = code.textContent.replace(/\n$/, '');
+      let text = extractCodeText(inner)
+        .replace(/^\n+/, '')
+        .replace(/\n+$/, '')
+        .replace(/[ \t]+$/gm, '');
+      text = stripLineNumbers(text);
+      if (!text.trim()) return '';
       return '\n\n```' + lang + '\n' + text + '\n```\n\n';
     }
   });
@@ -392,21 +421,134 @@ function extractMainContent() {
   return document.body.cloneNode(true);
 }
 
+function stripLineNumbers(text) {
+  var lines = text.split('\n');
+  var numberLineIndices = [];
+  var expected = 1;
+  for (var i = 0; i < lines.length; i++) {
+    var trimmed = lines[i].trim();
+    if (/^\d+$/.test(trimmed) && parseInt(trimmed, 10) === expected) {
+      numberLineIndices.push(i);
+      expected++;
+    }
+  }
+  if (numberLineIndices.length < 3) return text;
+  var skip = {};
+  for (var k = 0; k < numberLineIndices.length; k++) skip[numberLineIndices[k]] = true;
+  var result = [];
+  for (var j = 0; j < lines.length; j++) {
+    if (!skip[j]) result.push(lines[j]);
+  }
+  return result.join('\n');
+}
+
+function extractCodeText(node) {
+  var BLOCK = /^(DIV|P|SECTION|ARTICLE|LI|UL|OL|TR|BLOCKQUOTE|PRE|HEADER|FOOTER|NAV|ASIDE|FIGURE|TABLE|TBODY|THEAD|TFOOT|DL|DT|DD|H[1-6])$/;
+  var GUTTER = /(?:^|[\s_-])(line-?number|line-?numbers|lineno|gutter|token-line-number|sl-line-?number|margin-view-overlays|margin-line-numbers|CodeMirror-linenumbers|CodeMirror-gutter)(?:[\s_-]|$)/i;
+  var out = '';
+  var children = node.childNodes;
+  for (var i = 0; i < children.length; i++) {
+    var child = children[i];
+    if (child.nodeType === 3) {
+      out += child.nodeValue;
+    } else if (child.nodeType === 1) {
+      var cls = child.getAttribute && (child.getAttribute('class') || '');
+      if (GUTTER.test(cls) || child.getAttribute && child.getAttribute('data-line-number') != null) {
+        continue;
+      }
+      if (child.nodeName === 'BR') {
+        out += '\n';
+      } else if (BLOCK.test(child.nodeName)) {
+        var inner = extractCodeText(child);
+        if (!inner.trim()) continue;
+        if (out && !/\n$/.test(out)) out += '\n';
+        out += inner;
+        if (!/\n$/.test(out)) out += '\n';
+      } else {
+        out += extractCodeText(child);
+      }
+    }
+  }
+  return out;
+}
+
+function revealHiddenTabs(container) {
+  var panels = container.querySelectorAll('[role="tabpanel"]');
+  for (var i = 0; i < panels.length; i++) {
+    var panel = panels[i];
+    panel.removeAttribute('hidden');
+    panel.removeAttribute('aria-hidden');
+
+    var styleAttr = panel.getAttribute('style') || '';
+    var cleanStyle = styleAttr
+      .replace(/display\s*:\s*none\s*;?/gi, '')
+      .replace(/visibility\s*:\s*hidden\s*;?/gi, '')
+      .replace(/^\s*;+|;+\s*$/g, '')
+      .trim();
+    if (cleanStyle) panel.setAttribute('style', cleanStyle);
+    else panel.removeAttribute('style');
+
+    var labelText = '';
+    var labelledBy = panel.getAttribute('aria-labelledby');
+    if (labelledBy) {
+      var selector = '[id="' + labelledBy.replace(/"/g, '\\"') + '"]';
+      var labelEl = container.querySelector(selector);
+      if (!labelEl) {
+        try { labelEl = document.getElementById(labelledBy); } catch (e) {}
+      }
+      if (labelEl) labelText = labelEl.textContent.trim();
+    }
+
+    if (labelText && labelText.length < 80) {
+      var heading = document.createElement('p');
+      var strong = document.createElement('strong');
+      strong.textContent = labelText;
+      heading.appendChild(strong);
+      panel.insertBefore(heading, panel.firstChild);
+    }
+  }
+}
+
 function cleanContent(container, aggressive) {
-  // Remove script, style, and other non-content elements
+  // Always remove: non-content elements
   var removeSelectors = [
     'script', 'style', 'noscript', 'iframe', 'svg',
     'input', 'button', 'form', 'select', 'textarea'
   ];
 
+  // Always remove: page chrome (nav/sidebar/footer/try-it panels)
+  removeSelectors = removeSelectors.concat([
+    'nav', 'aside', 'header', 'footer',
+    '[role="navigation"]', '[role="complementary"]',
+    '[role="banner"]', '[role="contentinfo"]',
+    '[aria-hidden="true"]',
+    '.sidebar', '.nav', '.menu', '.toc', '.table-of-contents',
+    '.header', '.footer',
+    '.cookie-banner', '.cookie-notice', '.cookie-consent',
+    // Stoplight Elements nav/TOC (class names vary, often hash-suffixed)
+    '.sl-elements-table-of-contents',
+    '[class*="TableOfContents" i]',
+    '[class*="Sidebar" i]',
+    '[class*="ElementsTOC" i]',
+    '[data-testid*="table-of-contents" i]',
+    '[data-testid*="sidebar" i]',
+    // Stoplight schema viewer — property tree gets dumped as label-per-line noise
+    '[class*="JsonSchemaViewer" i]',
+    '[data-testid="schema-viewer"]',
+    // API docs "try it out" / request-maker panels
+    '[data-testid^="try-it" i]',
+    '[data-testid*="request-maker" i]',
+    '[class*="TryIt" i]', '[class*="RequestMaker" i]',
+    '.try-it', '.try-out', '.execute-wrapper',
+    '.swagger-ui .opblock-section-request-body',
+    '.sl-elements-try-it', '.sl-request-maker',
+    // "powered by" branding links
+    'a[href*="stoplight.io/?utm"]'
+  ]);
+
   if (aggressive) {
     removeSelectors = removeSelectors.concat([
-      'nav', 'footer', 'header', 'aside',
-      '[role="navigation"]', '[role="banner"]', '[role="contentinfo"]',
-      '[role="complementary"]', '[aria-hidden="true"]',
-      '.sidebar', '.nav', '.menu', '.footer', '.header',
       '.social-share', '.share-buttons', '.social-links',
-      '.cookie-banner', '.cookie-notice', '.cookie-consent',
       '.ad', '.ads', '.advertisement', '.ad-container',
       '.popup', '.modal', '.overlay',
       '.comments', '.comment-section',
