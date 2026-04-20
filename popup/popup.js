@@ -1,5 +1,6 @@
 const copyBtn = document.getElementById('copy-btn');
 const downloadBtn = document.getElementById('download-btn');
+const pickBtn = document.getElementById('pick-btn');
 const settingsBtn = document.getElementById('settings-btn');
 const modeMain = document.getElementById('mode-main');
 const modeFull = document.getElementById('mode-full');
@@ -11,6 +12,9 @@ const tokenCount = document.getElementById('token-count');
 
 let currentMode = 'main';
 let lastResult = null;
+
+// Display version from manifest
+document.getElementById('version-tag').textContent = `v${chrome.runtime.getManifest().version}`;
 
 // Restore last-used mode
 chrome.storage.sync.get({ conversionMode: 'main' }, (items) => {
@@ -95,6 +99,21 @@ downloadBtn.addEventListener('click', async () => {
   URL.revokeObjectURL(url);
 
   showSuccess(downloadBtn);
+});
+
+// Pick element
+pickBtn.addEventListener('click', () => {
+  pickBtn.disabled = true;
+  errorEl.classList.add('hidden');
+
+  chrome.runtime.sendMessage({ action: 'pickElement' }, (response) => {
+    if (response && response.error) {
+      showError(response.error);
+      pickBtn.disabled = false;
+      return;
+    }
+    window.close();
+  });
 });
 
 async function convert() {

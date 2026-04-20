@@ -5,8 +5,6 @@ window.__demarkupConvert = function(options) {
   try {
     const mode = options.mode || 'main';
     let sourceElement = null;
-    let pageTitle = document.title;
-    let pageUrl = document.location.href;
 
     if (mode === 'selection') {
       const selection = window.getSelection();
@@ -19,7 +17,6 @@ window.__demarkupConvert = function(options) {
     } else if (mode === 'full') {
       sourceElement = document.body.cloneNode(true);
     } else {
-      // Main content extraction
       sourceElement = extractMainContent();
     }
 
@@ -27,96 +24,358 @@ window.__demarkupConvert = function(options) {
       return { error: 'No content found to convert' };
     }
 
-    // Clean the content
-    cleanContent(sourceElement, mode !== 'full');
-
-    // Resolve relative URLs
-    resolveUrls(sourceElement);
-
-    // Configure Turndown
-    const turndownService = new TurndownService({
-      headingStyle: options.headingStyle === 'setext' ? 'setext' : 'atx',
-      bulletListMarker: options.bulletStyle || '-',
-      linkStyle: options.linkStyle === 'referenced' ? 'referenced' : 'inlined',
-      codeBlockStyle: 'fenced',
-      emDelimiter: '*',
-      strongDelimiter: '**',
-      hr: '---'
-    });
-
-    // Add GFM plugin for tables and strikethrough
-    if (typeof turndownPluginGfm !== 'undefined') {
-      turndownService.use(turndownPluginGfm.gfm);
-    }
-
-    // Custom rule: detect code block language from class names
-    turndownService.addRule('fencedCodeBlock', {
-      filter: function(node) {
-        return (
-          node.nodeName === 'PRE' &&
-          node.querySelector('code')
-        );
-      },
-      replacement: function(content, node) {
-        const code = node.querySelector('code');
-        const className = code.getAttribute('class') || '';
-        const langMatch = className.match(/(?:language-|lang-|highlight-)(\w+)/);
-        const lang = langMatch ? langMatch[1] : '';
-        const text = code.textContent.replace(/\n$/, '');
-        return '\n\n```' + lang + '\n' + text + '\n```\n\n';
-      }
-    });
-
-    // Convert using the DOM element directly
-    let markdown = turndownService.turndown(sourceElement);
-
-    // Post-process markdown to remove remaining noise
-    markdown = cleanMarkdown(markdown);
-
-    // Prepend metadata if enabled
-    if (options.includeMetadata) {
-      const date = new Date().toISOString().split('T')[0];
-      const frontMatter = [
-        '---',
-        'title: "' + pageTitle.replace(/"/g, '\\"') + '"',
-        'url: "' + pageUrl + '"',
-        'date: "' + date + '"',
-        '---',
-        '',
-        ''
-      ].join('\n');
-      markdown = frontMatter + markdown;
-    }
-
-    // Optimize for LLM consumption
-    if (options.includeLlmContext) {
-      markdown = optimizeForLlm(markdown);
-      const contentType = detectContentType(sourceElement, pageUrl);
-      const header = '# ' + pageTitle + '\n\n'
-        + '> **Source:** ' + pageUrl + '\n'
-        + '> **Type:** ' + contentType + '\n'
-        + '> **Extracted:** ' + new Date().toISOString().split('T')[0] + '\n\n'
-        + '---\n\n';
-      if (!options.includeMetadata) {
-        markdown = header + markdown;
-      }
-    }
-
-    // Calculate stats
-    const words = markdown.split(/\s+/).filter(function(w) { return w.length > 0; }).length;
-    const chars = markdown.length;
-    const tokens = Math.ceil(chars / 4); // rough estimate
-
-    return {
-      markdown: markdown,
-      title: pageTitle,
-      url: pageUrl,
-      stats: { words: words, chars: chars, tokens: tokens }
-    };
+    return convertElementToMarkdown(sourceElement, options, mode !== 'full');
   } catch (err) {
     return { error: err.message };
   }
 };
+
+window.__demarkupPick = function(options) {
+  if (window.__demarkupPickerActive) {
+    return { alreadyActive: true };
+  }
+  window.__demarkupPickerActive = true;
+
+  const style = document.createElement('style');
+  style.id = '__demarkup-picker-style';
+  style.textContent = [
+    '.__demarkup-picking, .__demarkup-picking * {',
+    '  cursor: crosshair !important;',
+    '}',
+    '#__demarkup-overlay {',
+    '  position: fixed;',
+    '  pointer-events: none;',
+    '  z-index: 2147483646;',
+    '  border: 2px solid #3a9a5c;',
+    '  background: rgba(58, 154, 92, 0.12);',
+    '  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35), 0 2px 12px rgba(58, 154, 92, 0.25);',
+    '  transition: top 60ms ease, left 60ms ease, width 60ms ease, height 60ms ease;',
+    '  display: none;',
+    '  box-sizing: border-box;',
+    '}',
+    '#__demarkup-hint {',
+    '  position: fixed;',
+    '  top: 16px;',
+    '  left: 50%;',
+    '  transform: translateX(-50%);',
+    '  background: #111a15;',
+    '  color: #eef3ef;',
+    '  padding: 10px 16px;',
+    '  border-radius: 8px;',
+    '  font-family: -apple-system, BlinkMacSystemFont, sans-serif;',
+    '  font-size: 13px;',
+    '  font-weight: 500;',
+    '  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);',
+    '  z-index: 2147483647;',
+    '  pointer-events: none;',
+    '  border: 1px solid #2a3a2f;',
+    '}',
+    '#__demarkup-hint .kbd {',
+    '  display: inline-block;',
+    '  padding: 1px 6px;',
+    '  margin: 0 4px;',
+    '  background: #2a3a2f;',
+    '  border-radius: 3px;',
+    '  font-size: 11px;',
+    '  color: #b8c8bc;',
+    '}',
+    '#__demarkup-tag {',
+    '  position: fixed;',
+    '  z-index: 2147483647;',
+    '  background: #3a9a5c;',
+    '  color: #fff;',
+    '  font-family: ui-monospace, Menlo, Monaco, monospace;',
+    '  font-size: 11px;',
+    '  font-weight: 500;',
+    '  padding: 2px 6px;',
+    '  border-radius: 3px;',
+    '  pointer-events: none;',
+    '  white-space: nowrap;',
+    '  display: none;',
+    '}',
+    '#__demarkup-toast {',
+    '  position: fixed;',
+    '  bottom: 24px;',
+    '  left: 50%;',
+    '  transform: translateX(-50%);',
+    '  background: #1e5a34;',
+    '  color: #eef3ef;',
+    '  padding: 10px 18px;',
+    '  border-radius: 8px;',
+    '  font-family: -apple-system, BlinkMacSystemFont, sans-serif;',
+    '  font-size: 13px;',
+    '  font-weight: 500;',
+    '  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);',
+    '  z-index: 2147483647;',
+    '  pointer-events: none;',
+    '  animation: __demarkup-fade 0.2s ease;',
+    '}',
+    '@keyframes __demarkup-fade { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }'
+  ].join('\n');
+  document.head.appendChild(style);
+  document.body.classList.add('__demarkup-picking');
+
+  const overlay = document.createElement('div');
+  overlay.id = '__demarkup-overlay';
+  document.body.appendChild(overlay);
+
+  const tag = document.createElement('div');
+  tag.id = '__demarkup-tag';
+  document.body.appendChild(tag);
+
+  const hint = document.createElement('div');
+  hint.id = '__demarkup-hint';
+  hint.appendChild(document.createTextNode('Click an element to copy as Markdown \u00B7 '));
+  const kbd = document.createElement('span');
+  kbd.className = 'kbd';
+  kbd.textContent = 'Esc';
+  hint.appendChild(kbd);
+  hint.appendChild(document.createTextNode(' cancel'));
+  document.body.appendChild(hint);
+
+  let currentHover = null;
+
+  function describe(el) {
+    let label = el.tagName.toLowerCase();
+    if (el.id) label += '#' + el.id;
+    else if (el.className && typeof el.className === 'string') {
+      const cls = el.className.trim().split(/\s+/).slice(0, 2).join('.');
+      if (cls) label += '.' + cls;
+    }
+    return label;
+  }
+
+  function positionOverlay(el) {
+    if (!el || !el.getBoundingClientRect) return;
+    const rect = el.getBoundingClientRect();
+    if (rect.width === 0 && rect.height === 0) {
+      overlay.style.display = 'none';
+      tag.style.display = 'none';
+      return;
+    }
+    overlay.style.display = 'block';
+    overlay.style.top = rect.top + 'px';
+    overlay.style.left = rect.left + 'px';
+    overlay.style.width = rect.width + 'px';
+    overlay.style.height = rect.height + 'px';
+
+    tag.textContent = describe(el);
+    tag.style.display = 'block';
+    const tagTop = rect.top - 22;
+    tag.style.top = (tagTop < 4 ? rect.bottom + 4 : tagTop) + 'px';
+    tag.style.left = Math.max(4, rect.left) + 'px';
+  }
+
+  function clearHover() {
+    currentHover = null;
+    overlay.style.display = 'none';
+    tag.style.display = 'none';
+  }
+
+  function cleanup() {
+    window.__demarkupPickerActive = false;
+    clearHover();
+    document.body.classList.remove('__demarkup-picking');
+    document.removeEventListener('mousemove', onMouseMove, true);
+    document.removeEventListener('click', onClick, true);
+    document.removeEventListener('keydown', onKey, true);
+    window.removeEventListener('scroll', onScroll, true);
+    window.removeEventListener('resize', onScroll, true);
+    if (style.parentNode) style.remove();
+    if (hint.parentNode) hint.remove();
+    if (overlay.parentNode) overlay.remove();
+    if (tag.parentNode) tag.remove();
+  }
+
+  function isOwnElement(el) {
+    if (!el) return true;
+    const id = el.id;
+    return id === '__demarkup-hint' || id === '__demarkup-toast' ||
+           id === '__demarkup-overlay' || id === '__demarkup-tag' ||
+           id === '__demarkup-picker-style';
+  }
+
+  function elementUnder(x, y) {
+    overlay.style.pointerEvents = 'none';
+    const el = document.elementFromPoint(x, y);
+    if (!el || isOwnElement(el)) return null;
+    return el;
+  }
+
+  function onMouseMove(e) {
+    const el = elementUnder(e.clientX, e.clientY);
+    if (!el || el === currentHover) return;
+    currentHover = el;
+    positionOverlay(el);
+  }
+
+  function onScroll() {
+    if (currentHover) positionOverlay(currentHover);
+  }
+
+  function onClick(e) {
+    const target = elementUnder(e.clientX, e.clientY) || e.target;
+    if (isOwnElement(target)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    cleanup();
+
+    try {
+      const clone = target.cloneNode(true);
+      const result = convertElementToMarkdown(clone, options, false);
+      if (result.error) {
+        showToast(result.error, true);
+        return;
+      }
+      navigator.clipboard.writeText(result.markdown).then(
+        function() { showToast('Copied ' + result.stats.words + ' words'); },
+        function(err) { showToast('Copy failed: ' + err.message, true); }
+      );
+    } catch (err) {
+      showToast('Conversion failed: ' + err.message, true);
+    }
+  }
+
+  function onKey(e) {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      cleanup();
+      showToast('Picker cancelled');
+    }
+  }
+
+  document.addEventListener('mousemove', onMouseMove, true);
+  document.addEventListener('click', onClick, true);
+  document.addEventListener('keydown', onKey, true);
+  window.addEventListener('scroll', onScroll, true);
+  window.addEventListener('resize', onScroll, true);
+
+  return { activated: true };
+};
+
+function showToast(message, isError) {
+  const existing = document.getElementById('__demarkup-toast');
+  if (existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.id = '__demarkup-toast';
+  toast.textContent = message;
+  if (isError) {
+    toast.style.background = '#d4604a';
+  }
+  document.body.appendChild(toast);
+  setTimeout(function() {
+    if (toast.parentNode) toast.remove();
+  }, 2000);
+}
+
+function convertElementToMarkdown(sourceElement, options, aggressiveClean) {
+  const pageTitle = document.title;
+  const pageUrl = document.location.href;
+
+  revealHiddenTabs(sourceElement);
+  cleanContent(sourceElement, aggressiveClean);
+  resolveUrls(sourceElement);
+
+  const turndownService = new TurndownService({
+    headingStyle: options.headingStyle === 'setext' ? 'setext' : 'atx',
+    bulletListMarker: options.bulletStyle || '-',
+    linkStyle: options.linkStyle === 'referenced' ? 'referenced' : 'inlined',
+    codeBlockStyle: 'fenced',
+    emDelimiter: '*',
+    strongDelimiter: '**',
+    hr: '---'
+  });
+
+  if (typeof turndownPluginGfm !== 'undefined') {
+    turndownService.use(turndownPluginGfm.gfm);
+  }
+
+  const CODE_CONTAINER_CLASS = /(?:^|\s)(?:code-block|code-editor|prism-code|prism-token|shiki|hljs|highlight|token-line|language-[a-z0-9+_-]+|sl-code-highlight|sl-code-block|sl-code-editor|CodeMirror)(?:\s|$)/i;
+
+  turndownService.addRule('fencedCodeBlock', {
+    filter: function(node) {
+      if (node.nodeName === 'PRE') return true;
+      if (node.nodeName === 'DIV' || node.nodeName === 'SECTION') {
+        const cls = node.getAttribute('class') || '';
+        if (CODE_CONTAINER_CLASS.test(cls)) {
+          // Skip nested matches — only fence the outermost wrapper
+          let p = node.parentNode;
+          while (p && p.nodeType === 1) {
+            if ((p.nodeName === 'DIV' || p.nodeName === 'SECTION') &&
+                CODE_CONTAINER_CLASS.test(p.getAttribute('class') || '')) {
+              return false;
+            }
+            if (p.nodeName === 'PRE') return false;
+            p = p.parentNode;
+          }
+          return true;
+        }
+      }
+      if (node.nodeName === 'CODE') {
+        const parent = node.parentNode;
+        if (!parent) return false;
+        if (parent.nodeName === 'PRE') return false;
+        if (/^(P|SPAN|LI|H[1-6]|TD|TH|A|EM|STRONG|BUTTON|DT|DD|LABEL)$/.test(parent.nodeName)) return false;
+        return node.textContent.indexOf('\n') >= 0;
+      }
+      return false;
+    },
+    replacement: function(content, node) {
+      const inner = node.nodeName === 'PRE' ? (node.querySelector('code') || node) : node;
+      const classes = (node.getAttribute('class') || '') + ' ' + (inner.getAttribute('class') || '');
+      const langMatch = classes.match(/(?:language-|lang-|highlight-)([a-z0-9+_-]+)/i);
+      const lang = langMatch ? langMatch[1] : '';
+      let text = extractCodeText(inner)
+        .replace(/^\n+/, '')
+        .replace(/\n+$/, '')
+        .replace(/[ \t]+$/gm, '');
+      text = stripLineNumbers(text);
+      if (!text.trim()) return '';
+      return '\n\n```' + lang + '\n' + text + '\n```\n\n';
+    }
+  });
+
+  let markdown = turndownService.turndown(sourceElement);
+  markdown = cleanMarkdown(markdown);
+
+  if (options.includeMetadata) {
+    const date = new Date().toISOString().split('T')[0];
+    const frontMatter = [
+      '---',
+      'title: "' + pageTitle.replace(/"/g, '\\"') + '"',
+      'url: "' + pageUrl + '"',
+      'date: "' + date + '"',
+      '---',
+      '',
+      ''
+    ].join('\n');
+    markdown = frontMatter + markdown;
+  }
+
+  if (options.includeLlmContext) {
+    markdown = optimizeForLlm(markdown);
+    const contentType = detectContentType(sourceElement, pageUrl);
+    const header = '# ' + pageTitle + '\n\n'
+      + '> **Source:** ' + pageUrl + '\n'
+      + '> **Type:** ' + contentType + '\n'
+      + '> **Extracted:** ' + new Date().toISOString().split('T')[0] + '\n\n'
+      + '---\n\n';
+    if (!options.includeMetadata) {
+      markdown = header + markdown;
+    }
+  }
+
+  const words = markdown.split(/\s+/).filter(function(w) { return w.length > 0; }).length;
+  const chars = markdown.length;
+  const tokens = Math.ceil(chars / 4);
+
+  return {
+    markdown: markdown,
+    title: pageTitle,
+    url: pageUrl,
+    stats: { words: words, chars: chars, tokens: tokens }
+  };
+}
 
 function extractMainContent() {
   // Priority-ordered content selectors
@@ -162,21 +421,134 @@ function extractMainContent() {
   return document.body.cloneNode(true);
 }
 
+function stripLineNumbers(text) {
+  var lines = text.split('\n');
+  var numberLineIndices = [];
+  var expected = 1;
+  for (var i = 0; i < lines.length; i++) {
+    var trimmed = lines[i].trim();
+    if (/^\d+$/.test(trimmed) && parseInt(trimmed, 10) === expected) {
+      numberLineIndices.push(i);
+      expected++;
+    }
+  }
+  if (numberLineIndices.length < 3) return text;
+  var skip = {};
+  for (var k = 0; k < numberLineIndices.length; k++) skip[numberLineIndices[k]] = true;
+  var result = [];
+  for (var j = 0; j < lines.length; j++) {
+    if (!skip[j]) result.push(lines[j]);
+  }
+  return result.join('\n');
+}
+
+function extractCodeText(node) {
+  var BLOCK = /^(DIV|P|SECTION|ARTICLE|LI|UL|OL|TR|BLOCKQUOTE|PRE|HEADER|FOOTER|NAV|ASIDE|FIGURE|TABLE|TBODY|THEAD|TFOOT|DL|DT|DD|H[1-6])$/;
+  var GUTTER = /(?:^|[\s_-])(line-?number|line-?numbers|lineno|gutter|token-line-number|sl-line-?number|margin-view-overlays|margin-line-numbers|CodeMirror-linenumbers|CodeMirror-gutter)(?:[\s_-]|$)/i;
+  var out = '';
+  var children = node.childNodes;
+  for (var i = 0; i < children.length; i++) {
+    var child = children[i];
+    if (child.nodeType === 3) {
+      out += child.nodeValue;
+    } else if (child.nodeType === 1) {
+      var cls = child.getAttribute && (child.getAttribute('class') || '');
+      if (GUTTER.test(cls) || child.getAttribute && child.getAttribute('data-line-number') != null) {
+        continue;
+      }
+      if (child.nodeName === 'BR') {
+        out += '\n';
+      } else if (BLOCK.test(child.nodeName)) {
+        var inner = extractCodeText(child);
+        if (!inner.trim()) continue;
+        if (out && !/\n$/.test(out)) out += '\n';
+        out += inner;
+        if (!/\n$/.test(out)) out += '\n';
+      } else {
+        out += extractCodeText(child);
+      }
+    }
+  }
+  return out;
+}
+
+function revealHiddenTabs(container) {
+  var panels = container.querySelectorAll('[role="tabpanel"]');
+  for (var i = 0; i < panels.length; i++) {
+    var panel = panels[i];
+    panel.removeAttribute('hidden');
+    panel.removeAttribute('aria-hidden');
+
+    var styleAttr = panel.getAttribute('style') || '';
+    var cleanStyle = styleAttr
+      .replace(/display\s*:\s*none\s*;?/gi, '')
+      .replace(/visibility\s*:\s*hidden\s*;?/gi, '')
+      .replace(/^\s*;+|;+\s*$/g, '')
+      .trim();
+    if (cleanStyle) panel.setAttribute('style', cleanStyle);
+    else panel.removeAttribute('style');
+
+    var labelText = '';
+    var labelledBy = panel.getAttribute('aria-labelledby');
+    if (labelledBy) {
+      var selector = '[id="' + labelledBy.replace(/"/g, '\\"') + '"]';
+      var labelEl = container.querySelector(selector);
+      if (!labelEl) {
+        try { labelEl = document.getElementById(labelledBy); } catch (e) {}
+      }
+      if (labelEl) labelText = labelEl.textContent.trim();
+    }
+
+    if (labelText && labelText.length < 80) {
+      var heading = document.createElement('p');
+      var strong = document.createElement('strong');
+      strong.textContent = labelText;
+      heading.appendChild(strong);
+      panel.insertBefore(heading, panel.firstChild);
+    }
+  }
+}
+
 function cleanContent(container, aggressive) {
-  // Remove script, style, and other non-content elements
+  // Always remove: non-content elements
   var removeSelectors = [
     'script', 'style', 'noscript', 'iframe', 'svg',
     'input', 'button', 'form', 'select', 'textarea'
   ];
 
+  // Always remove: page chrome (nav/sidebar/footer/try-it panels)
+  removeSelectors = removeSelectors.concat([
+    'nav', 'aside', 'header', 'footer',
+    '[role="navigation"]', '[role="complementary"]',
+    '[role="banner"]', '[role="contentinfo"]',
+    '[aria-hidden="true"]',
+    '.sidebar', '.nav', '.menu', '.toc', '.table-of-contents',
+    '.header', '.footer',
+    '.cookie-banner', '.cookie-notice', '.cookie-consent',
+    // Stoplight Elements nav/TOC (class names vary, often hash-suffixed)
+    '.sl-elements-table-of-contents',
+    '[class*="TableOfContents" i]',
+    '[class*="Sidebar" i]',
+    '[class*="ElementsTOC" i]',
+    '[data-testid*="table-of-contents" i]',
+    '[data-testid*="sidebar" i]',
+    // Stoplight schema viewer — property tree gets dumped as label-per-line noise
+    '[class*="JsonSchemaViewer" i]',
+    '[data-testid="schema-viewer"]',
+    // API docs "try it out" / request-maker panels
+    '[data-testid^="try-it" i]',
+    '[data-testid*="request-maker" i]',
+    '[class*="TryIt" i]', '[class*="RequestMaker" i]',
+    '.try-it', '.try-out', '.execute-wrapper',
+    '.swagger-ui .opblock-section-request-body',
+    '.sl-elements-try-it', '.sl-request-maker',
+    // "powered by" branding links
+    'a[href*="stoplight.io/?utm"]'
+  ]);
+
   if (aggressive) {
     removeSelectors = removeSelectors.concat([
-      'nav', 'footer', 'header', 'aside',
-      '[role="navigation"]', '[role="banner"]', '[role="contentinfo"]',
-      '[role="complementary"]', '[aria-hidden="true"]',
-      '.sidebar', '.nav', '.menu', '.footer', '.header',
       '.social-share', '.share-buttons', '.social-links',
-      '.cookie-banner', '.cookie-notice', '.cookie-consent',
       '.ad', '.ads', '.advertisement', '.ad-container',
       '.popup', '.modal', '.overlay',
       '.comments', '.comment-section',
@@ -203,6 +575,18 @@ function cleanContent(container, aggressive) {
       style.indexOf('visibility: hidden') !== -1 || style.indexOf('visibility:hidden') !== -1
     ) {
       allEls[k].remove();
+    }
+  }
+
+  // Always unwrap javascript: / unsafe:javascript: links (UI-only actions, not real navigation)
+  var jsLinks = container.querySelectorAll('a[href^="javascript:"], a[href^="unsafe:javascript:"]');
+  for (var ji = 0; ji < jsLinks.length; ji++) {
+    var jsText = jsLinks[ji].textContent.trim();
+    if (jsText) {
+      var textNode = document.createTextNode(jsText);
+      jsLinks[ji].parentNode.replaceChild(textNode, jsLinks[ji]);
+    } else {
+      jsLinks[ji].remove();
     }
   }
 
@@ -265,18 +649,6 @@ function cleanContent(container, aggressive) {
         dupeSection.remove();
       } else {
         seenHeadings[headingText] = true;
-      }
-    }
-
-    // Remove javascript: links (UI-only actions, not real navigation)
-    var jsLinks = container.querySelectorAll('a[href^="javascript:"]');
-    for (var ji = 0; ji < jsLinks.length; ji++) {
-      var jsText = jsLinks[ji].textContent.trim();
-      if (jsText) {
-        var textNode = document.createTextNode(jsText);
-        jsLinks[ji].parentNode.replaceChild(textNode, jsLinks[ji]);
-      } else {
-        jsLinks[ji].remove();
       }
     }
 
@@ -350,8 +722,8 @@ function optimizeForLlm(markdown) {
   // Remove bold/italic from hashtags: **#Tag** or *#Tag* → #Tag
   markdown = markdown.replace(/\*{1,2}(#\w+)\*{1,2}/g, '$1');
 
-  // Remove javascript:; links entirely (UI-only buttons)
-  markdown = markdown.replace(/\[([^\]]*)\]\(javascript:[^)]*\)/g, '$1');
+  // Remove javascript: / unsafe:javascript: links entirely (UI-only buttons)
+  markdown = markdown.replace(/\[([^\]]*)\]\((?:unsafe:)?javascript:[^)]*\)/g, '$1');
 
   // Remove all LinkedIn internal links (keep text only)
   markdown = markdown.replace(/\[([^\]]*)\]\(https?:\/\/(?:www\.)?linkedin\.com\/(?:search|feed|company|in\/|mynetwork|analytics|dashboard|jobs|overlay)[^)]*\)/g, '$1');
