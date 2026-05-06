@@ -5,13 +5,9 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
-# ─── Load credentials from .env ──────────────────────────────────────────────
-if [ -f "$PROJECT_DIR/.env" ]; then
-  set -a
-  source "$PROJECT_DIR/.env"
-  set +a
-else
-  echo "❌ .env file not found at $PROJECT_DIR/.env"
+# ─── Pre-flight: gh CLI authenticated ───────────────────────────────────────
+if ! gh auth status >/dev/null 2>&1; then
+  echo "❌ gh CLI is not authenticated. Run: gh auth login"
   exit 1
 fi
 
