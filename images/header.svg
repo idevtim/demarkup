@@ -1,137 +1,305 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 340" width="820" height="340" role="img" aria-label="DeMarkup terminal animation: converting a webpage into clean Markdown">
-  <title>DeMarkup — webpage to clean Markdown</title>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 400" width="820" height="400" role="img" aria-label="DeMarkup: a Chrome extension that converts cluttered webpages into clean Markdown with one click">
+  <title>DeMarkup — convert any webpage into clean Markdown</title>
   <defs>
     <style>
-      .term-bg { fill: #0d1117; }
-      .chrome { fill: #161b22; }
-      .border { stroke: #30363d; stroke-width: 1; fill: none; }
-      .t { font-family: 'SFMono-Regular', 'SF Mono', Menlo, Monaco, Consolas, 'Liberation Mono', monospace; font-size: 15px; }
-      .prompt { fill: #7ee787; }
-      .ok { fill: #7ee787; }
-      .out { fill: #c9d1d9; }
-      .dim { fill: #6e7681; font-size: 12px; }
-      .arrow { fill: #58a6ff; }
-      .heading { fill: #ff7b72; font-weight: 700; }
-      .em { fill: #d2a8ff; font-style: italic; }
-      .url { fill: #79c0ff; text-decoration: underline; }
-      .num { fill: #ffa657; }
+      .sans { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; }
+      .mono { font-family: 'SFMono-Regular', Menlo, Monaco, Consolas, monospace; }
+      .chrome-bg { fill: #f1f3f4; }
+      .page-bg { fill: #ffffff; }
+      .chrome-border { stroke: #dadce0; stroke-width: 1; fill: none; }
+      .tab-text { fill: #3c4043; font-size: 12px; }
+      .url-text { fill: #202124; font-size: 13px; }
+      .icon-stroke { stroke: #5f6368; stroke-width: 1.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+      .nav-text { fill: #5f6368; font-size: 12px; }
+      .ad-bg { fill: #fef7e0; }
+      .ad-border { stroke: #f9ab00; stroke-width: 1; stroke-dasharray: 4 2; fill: none; }
+      .ad-label { fill: #b06000; font-size: 10px; font-weight: 700; letter-spacing: 1px; }
+      .placeholder { fill: #e8eaed; }
+      .hero-grad { fill: url(#dm-hero-grad); }
+      .article-title { fill: #202124; font-size: 16px; font-weight: 700; }
+      .sidebar-bg { fill: #f8f9fa; }
+      .sidebar-title { fill: #5f6368; font-size: 10px; font-weight: 700; letter-spacing: 1px; }
+      .md-h1 { fill: #1f2328; font-size: 22px; font-weight: 700; }
+      .md-h2 { fill: #1f2328; font-size: 15px; font-weight: 700; }
+      .md-syntax { fill: #cf222e; font-weight: 700; }
+      .md-body { fill: #1f2328; font-size: 13px; }
+      .md-muted { fill: #59636e; font-size: 12px; }
+      .md-code { fill: #0550ae; }
+      .md-bullet { fill: #1f2328; }
+      .toast-bg { fill: #1f6f3a; }
+      .toast-text { fill: #ffffff; font-size: 12px; font-weight: 600; }
     </style>
 
-    <!-- Each line is revealed by growing the width of a clipping rectangle.
-         The full cycle is 11s. Lines type in sequence, then hold, then reset. -->
-    <clipPath id="dm-l1"><rect x="0" y="-20" height="40" width="0">
-      <animate attributeName="width"
-               values="0;350;350;350;0"
-               keyTimes="0;0.07;0.97;0.99;1"
-               dur="11s" repeatCount="indefinite"/>
-    </rect></clipPath>
+    <linearGradient id="dm-logo-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1ea65a"/>
+      <stop offset="1" stop-color="#0e7339"/>
+    </linearGradient>
 
-    <clipPath id="dm-l2"><rect x="0" y="8" height="40" width="0">
-      <animate attributeName="width"
-               values="0;0;360;360;360;0"
-               keyTimes="0;0.10;0.17;0.97;0.99;1"
-               dur="11s" repeatCount="indefinite"/>
-    </rect></clipPath>
+    <linearGradient id="dm-hero-grad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4285f4"/>
+      <stop offset="1" stop-color="#34a853"/>
+    </linearGradient>
 
-    <clipPath id="dm-l3"><rect x="0" y="36" height="40" width="0">
-      <animate attributeName="width"
-               values="0;0;470;470;470;0"
-               keyTimes="0;0.20;0.30;0.97;0.99;1"
-               dur="11s" repeatCount="indefinite"/>
-    </rect></clipPath>
-
-    <clipPath id="dm-l4"><rect x="0" y="64" height="40" width="0">
-      <animate attributeName="width"
-               values="0;0;220;220;220;0"
-               keyTimes="0;0.33;0.39;0.97;0.99;1"
-               dur="11s" repeatCount="indefinite"/>
-    </rect></clipPath>
-
-    <clipPath id="dm-l5"><rect x="0" y="112" height="40" width="0">
-      <animate attributeName="width"
-               values="0;0;330;330;330;0"
-               keyTimes="0;0.45;0.55;0.97;0.99;1"
-               dur="11s" repeatCount="indefinite"/>
-    </rect></clipPath>
-
-    <clipPath id="dm-l6"><rect x="0" y="140" height="40" width="0">
-      <animate attributeName="width"
-               values="0;0;340;340;340;0"
-               keyTimes="0;0.58;0.68;0.97;0.99;1"
-               dur="11s" repeatCount="indefinite"/>
-    </rect></clipPath>
+    <!-- Cursor moves toward the extension icon, then snaps away -->
+    <symbol id="dm-cursor" viewBox="0 0 16 20">
+      <path d="M 0 0 L 0 14 L 4 11 L 7 18 L 9 17 L 6 10 L 11 10 Z"
+            fill="#202124" stroke="#ffffff" stroke-width="1" stroke-linejoin="round"/>
+    </symbol>
   </defs>
 
-  <!-- Window frame -->
-  <rect class="term-bg" width="820" height="340" rx="10"/>
-  <rect class="chrome" width="820" height="36" rx="10"/>
-  <rect class="chrome" y="26" width="820" height="10"/>
-  <rect class="border" x="0.5" y="0.5" width="819" height="339" rx="10"/>
-  <line x1="0" y1="36" x2="820" y2="36" stroke="#30363d" stroke-width="1"/>
+  <!-- Outer window -->
+  <rect x="1" y="1" width="818" height="398" rx="10" fill="#ffffff"/>
+  <rect x="0.5" y="0.5" width="819" height="399" rx="10" stroke="#d0d4d9" stroke-width="1" fill="none"/>
+
+  <!-- Chrome bar background -->
+  <path d="M 1 11 Q 1 1 11 1 L 809 1 Q 819 1 819 11 L 819 72 L 1 72 Z" class="chrome-bg"/>
 
   <!-- Traffic lights -->
-  <circle cx="22" cy="18" r="6" fill="#ff5f57"/>
-  <circle cx="42" cy="18" r="6" fill="#febc2e"/>
-  <circle cx="62" cy="18" r="6" fill="#28c840"/>
+  <circle cx="20" cy="18" r="6" fill="#ff5f57"/>
+  <circle cx="40" cy="18" r="6" fill="#febc2e"/>
+  <circle cx="60" cy="18" r="6" fill="#28c840"/>
 
-  <!-- Window title -->
-  <text class="t dim" x="410" y="22" text-anchor="middle">demarkup — webpage → markdown</text>
+  <!-- Active tab -->
+  <path d="M 92 36 Q 92 8 108 8 L 280 8 Q 296 8 296 36 Z" fill="#ffffff"/>
+  <text class="sans tab-text" x="116" y="27">example — 10 Tips for Better Web Reading</text>
 
-  <!-- Terminal content -->
-  <g transform="translate(28, 74)">
+  <!-- New tab plus -->
+  <circle cx="310" cy="22" r="9" fill="none" stroke="#dadce0"/>
+  <path d="M 305 22 L 315 22 M 310 17 L 310 27" stroke="#5f6368" stroke-width="1.2"/>
 
-    <!-- Line 1: command -->
-    <g clip-path="url(#dm-l1)">
-      <text class="t" y="0">
-        <tspan class="prompt">$</tspan><tspan class="out" dx="6">demarkup convert </tspan><tspan class="url">https://lunopeak.com</tspan>
-      </text>
-    </g>
-
-    <!-- Line 2 -->
-    <g clip-path="url(#dm-l2)">
-      <text class="t" y="28">
-        <tspan class="ok">✓</tspan><tspan class="out" dx="6">Extracted main content (</tspan><tspan class="num">1,247</tspan><tspan class="out"> words)</tspan>
-      </text>
-    </g>
-
-    <!-- Line 3 -->
-    <g clip-path="url(#dm-l3)">
-      <text class="t" y="56">
-        <tspan class="ok">✓</tspan><tspan class="out" dx="6">Stripped </tspan><tspan class="num">38</tspan><tspan class="out"> nav links, </tspan><tspan class="num">12</tspan><tspan class="out"> ads, </tspan><tspan class="num">4</tspan><tspan class="out"> trackers</tspan>
-      </text>
-    </g>
-
-    <!-- Line 4 -->
-    <g clip-path="url(#dm-l4)">
-      <text class="t" y="84">
-        <tspan class="ok">✓</tspan><tspan class="out" dx="6">Copied to clipboard</tspan>
-      </text>
-    </g>
-
-    <!-- Separator hint -->
-    <g clip-path="url(#dm-l5)">
-      <text class="t" y="132">
-        <tspan class="arrow">›</tspan><tspan class="heading" dx="6"># The Future of Clean Reading</tspan>
-      </text>
-    </g>
-
-    <!-- Italic tagline -->
-    <g clip-path="url(#dm-l6)">
-      <text class="t" y="160">
-        <tspan class="arrow">›</tspan><tspan class="em" dx="6">Clean. Readable. Ready for LLMs.</tspan>
-      </text>
-    </g>
-
-    <!-- Blinking cursor anchored at end of final line -->
-    <rect x="316" y="148" width="9" height="16" fill="#c9d1d9">
-      <animate attributeName="opacity"
-               values="0;0;1;1;0;1;0;1;0;1;0"
-               keyTimes="0;0.68;0.70;0.74;0.78;0.82;0.86;0.90;0.94;0.98;1"
-               dur="11s" repeatCount="indefinite"/>
-    </rect>
-
+  <!-- Address bar row: back / forward / reload -->
+  <g class="icon-stroke" transform="translate(18, 44)">
+    <path d="M 8 12 L 2 6 L 8 0"/>
+  </g>
+  <g class="icon-stroke" transform="translate(42, 44)" opacity="0.5">
+    <path d="M 0 12 L 6 6 L 0 0"/>
+  </g>
+  <g class="icon-stroke" transform="translate(64, 42)">
+    <path d="M 12 4 A 6 6 0 1 0 12 12 L 12 14 M 12 14 L 10 12 M 12 14 L 14 12"/>
   </g>
 
-  <!-- Subtle footer hint -->
-  <text class="t dim" x="410" y="320" text-anchor="middle">⌘⇧M  ·  one-click conversion  ·  privacy-first  ·  no external APIs</text>
+  <!-- Address bar -->
+  <rect x="92" y="40" width="600" height="24" rx="12" fill="#ffffff" stroke="#dadce0" stroke-width="1"/>
+  <!-- Lock icon -->
+  <g transform="translate(104, 46)">
+    <rect x="0" y="5" width="10" height="7" rx="1.5" fill="none" stroke="#188038" stroke-width="1.2"/>
+    <path d="M 2 5 V 3.5 A 3 3 0 0 1 8 3.5 V 5" fill="none" stroke="#188038" stroke-width="1.2"/>
+  </g>
+  <text class="sans url-text" x="122" y="57">example.com<tspan fill="#5f6368">/articles/10-tips-better-web-reading</tspan></text>
+  <!-- Right side of address bar: star bookmark -->
+  <g class="icon-stroke" transform="translate(672, 46)">
+    <path d="M 6 0 L 7.5 4 L 12 4.2 L 8.5 7 L 9.5 11 L 6 8.8 L 2.5 11 L 3.5 7 L 0 4.2 L 4.5 4 Z"/>
+  </g>
+
+  <!-- Toolbar icons (bookmarks, account) -->
+  <g class="icon-stroke" transform="translate(706, 46)" opacity="0.6">
+    <path d="M 0 2 H 12 M 0 6 H 12 M 0 10 H 8"/>
+  </g>
+
+  <!-- Extension icon area with pulse ring -->
+  <g transform="translate(740, 42)">
+    <!-- Click pulse rings (3 staggered rings) -->
+    <circle cx="10" cy="10" r="0" fill="none" stroke="#1ea65a" stroke-width="2">
+      <animate attributeName="r" values="6;6;26;26" keyTimes="0;0.18;0.27;1" dur="10s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;0;0.9;0;0" keyTimes="0;0.18;0.20;0.28;1" dur="10s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="10" cy="10" r="0" fill="none" stroke="#1ea65a" stroke-width="1.6">
+      <animate attributeName="r" values="6;6;6;32;32" keyTimes="0;0.20;0.22;0.32;1" dur="10s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;0;0;0.7;0;0" keyTimes="0;0.20;0.22;0.24;0.34;1" dur="10s" repeatCount="indefinite"/>
+    </circle>
+
+    <rect width="20" height="20" rx="4.5" fill="url(#dm-logo-grad)"/>
+    <path d="M 4.5 12 L 4.5 5 L 10 9.5 L 15.5 5 L 15.5 12"
+          fill="none" stroke="#ffffff" stroke-width="1.6"
+          stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M 10 11.2 L 10 15.6 M 7.2 13 L 10 15.8 L 12.8 13"
+          fill="none" stroke="#ffffff" stroke-width="1.6"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- Account avatar -->
+  <circle cx="788" cy="52" r="9" fill="#1a73e8"/>
+  <text class="sans" x="788" y="56" text-anchor="middle" fill="#ffffff" font-size="10" font-weight="700">L</text>
+
+  <!-- Chrome bottom border -->
+  <line x1="1" y1="72" x2="819" y2="72" stroke="#dadce0" stroke-width="1"/>
+
+  <!-- Cursor that animates toward the extension icon -->
+  <g>
+    <animateTransform attributeName="transform" type="translate"
+                      values="380,260; 380,260; 746,50; 746,50; 746,50; 380,300; 380,300"
+                      keyTimes="0;0.04;0.20;0.30;0.40;0.55;1"
+                      dur="10s" repeatCount="indefinite"/>
+    <animate attributeName="opacity"
+             values="0;1;1;1;1;0;0;0"
+             keyTimes="0;0.04;0.08;0.20;0.50;0.55;0.95;1"
+             dur="10s" repeatCount="indefinite"/>
+    <use href="#dm-cursor" width="16" height="20"/>
+  </g>
+
+  <!-- ============================ -->
+  <!--   MESSY WEBPAGE LAYER        -->
+  <!-- ============================ -->
+  <g>
+    <animate attributeName="opacity"
+             values="1;1;1;0;0;0;0;1"
+             keyTimes="0;0.22;0.27;0.34;0.94;0.97;0.99;1"
+             dur="10s" repeatCount="indefinite"/>
+
+    <!-- Top nav strip -->
+    <rect x="1" y="73" width="818" height="28" fill="#fafafa"/>
+    <line x1="1" y1="100" x2="819" y2="100" stroke="#e8eaed" stroke-width="1"/>
+    <text class="sans" x="24" y="92" fill="#1a73e8" font-size="12" font-weight="700">example</text>
+    <text class="sans nav-text" x="120" y="92">Home</text>
+    <text class="sans nav-text" x="170" y="92">Articles</text>
+    <text class="sans nav-text" x="230" y="92">Tools</text>
+    <text class="sans nav-text" x="280" y="92">About</text>
+    <text class="sans nav-text" x="330" y="92">Pricing</text>
+    <text class="sans nav-text" x="384" y="92">Newsletter</text>
+    <text class="sans nav-text" x="456" y="92">Login</text>
+    <rect x="510" y="80" width="60" height="22" rx="11" fill="#1a73e8"/>
+    <text class="sans" x="540" y="95" text-anchor="middle" fill="#ffffff" font-size="11" font-weight="600">Sign up</text>
+
+    <!-- "Subscribe" cookie banner ribbon -->
+    <rect x="600" y="80" width="200" height="22" rx="3" fill="#fff3cd" stroke="#ffc107" stroke-width="1"/>
+    <text class="sans" x="612" y="95" fill="#664d03" font-size="10">🍪 We use 47 cookies. Accept all?</text>
+
+    <!-- Left ad column -->
+    <g transform="translate(20, 116)">
+      <rect width="130" height="100" rx="3" class="ad-bg"/>
+      <rect width="130" height="100" rx="3" class="ad-border"/>
+      <text class="sans ad-label" x="6" y="14">SPONSORED</text>
+      <rect x="6" y="22" width="118" height="50" fill="#fde293" rx="2"/>
+      <text class="sans" x="65" y="52" text-anchor="middle" fill="#b06000" font-size="11" font-weight="700">Buy now!</text>
+      <rect x="6" y="78" width="100" height="6" rx="1" fill="#f9d27a"/>
+      <rect x="6" y="88" width="80" height="6" rx="1" fill="#f9d27a"/>
+
+      <rect y="116" width="130" height="100" rx="3" class="ad-bg"/>
+      <rect y="116" width="130" height="100" rx="3" class="ad-border"/>
+      <text class="sans ad-label" x="6" y="130">AD</text>
+      <circle cx="35" cy="160" r="18" fill="#fde293"/>
+      <rect x="60" y="148" width="60" height="6" rx="1" fill="#f9d27a"/>
+      <rect x="60" y="160" width="55" height="6" rx="1" fill="#f9d27a"/>
+      <rect x="60" y="172" width="50" height="6" rx="1" fill="#f9d27a"/>
+
+      <rect y="232" width="130" height="50" rx="3" class="ad-bg"/>
+      <rect y="232" width="130" height="50" rx="3" class="ad-border"/>
+      <text class="sans ad-label" x="6" y="246">PROMO</text>
+      <rect x="6" y="254" width="118" height="20" rx="2" fill="#fde293"/>
+    </g>
+
+    <!-- Center article (messy) -->
+    <g transform="translate(170, 116)">
+      <!-- Hero image -->
+      <rect width="420" height="100" rx="3" class="hero-grad"/>
+      <text class="sans" x="20" y="60" fill="#ffffff" font-size="11" opacity="0.85">[Stock photo]</text>
+
+      <!-- Title -->
+      <text class="sans article-title" x="0" y="136">10 Tips for Better Web Reading</text>
+      <text class="sans" x="0" y="154" fill="#5f6368" font-size="11">By Jane Doe · May 2026 · 6 min read</text>
+
+      <!-- Paragraph 1 (gray bars) -->
+      <rect x="0" y="168" width="420" height="6" rx="1" fill="#dadce0"/>
+      <rect x="0" y="180" width="410" height="6" rx="1" fill="#dadce0"/>
+      <rect x="0" y="192" width="380" height="6" rx="1" fill="#dadce0"/>
+      <rect x="0" y="204" width="220" height="6" rx="1" fill="#dadce0"/>
+
+      <!-- Inline ad break -->
+      <rect x="0" y="220" width="420" height="40" rx="3" class="ad-bg"/>
+      <rect x="0" y="220" width="420" height="40" rx="3" class="ad-border"/>
+      <text class="sans ad-label" x="8" y="234">SPONSORED CONTENT</text>
+      <rect x="8" y="240" width="200" height="6" rx="1" fill="#f9d27a"/>
+      <rect x="8" y="250" width="160" height="6" rx="1" fill="#f9d27a"/>
+
+      <!-- Paragraph 2 -->
+      <rect x="0" y="270" width="420" height="6" rx="1" fill="#dadce0"/>
+      <rect x="0" y="282" width="400" height="6" rx="1" fill="#dadce0"/>
+    </g>
+
+    <!-- Right sidebar -->
+    <g transform="translate(610, 116)">
+      <rect width="190" height="280" rx="3" class="sidebar-bg"/>
+      <text class="sans sidebar-title" x="10" y="22">RELATED</text>
+      <line x1="10" y1="28" x2="180" y2="28" stroke="#e8eaed"/>
+
+      <rect x="10" y="38" width="40" height="40" rx="3" class="placeholder"/>
+      <rect x="60" y="42" width="120" height="6" rx="1" fill="#bdc1c6"/>
+      <rect x="60" y="54" width="100" height="6" rx="1" fill="#dadce0"/>
+      <rect x="60" y="66" width="80" height="6" rx="1" fill="#dadce0"/>
+
+      <rect x="10" y="88" width="40" height="40" rx="3" class="placeholder"/>
+      <rect x="60" y="92" width="115" height="6" rx="1" fill="#bdc1c6"/>
+      <rect x="60" y="104" width="95" height="6" rx="1" fill="#dadce0"/>
+      <rect x="60" y="116" width="70" height="6" rx="1" fill="#dadce0"/>
+
+      <rect x="10" y="138" width="40" height="40" rx="3" class="placeholder"/>
+      <rect x="60" y="142" width="125" height="6" rx="1" fill="#bdc1c6"/>
+      <rect x="60" y="154" width="100" height="6" rx="1" fill="#dadce0"/>
+      <rect x="60" y="166" width="85" height="6" rx="1" fill="#dadce0"/>
+
+      <!-- Newsletter signup -->
+      <rect x="10" y="192" width="170" height="76" rx="3" fill="#ffffff" stroke="#dadce0"/>
+      <text class="sans" x="20" y="210" fill="#202124" font-size="11" font-weight="700">Subscribe!</text>
+      <rect x="20" y="220" width="150" height="20" rx="3" fill="#f1f3f4"/>
+      <text class="sans" x="26" y="234" fill="#9aa0a6" font-size="10">email@example.com</text>
+      <rect x="20" y="246" width="150" height="16" rx="3" fill="#1a73e8"/>
+      <text class="sans" x="95" y="257" text-anchor="middle" fill="#ffffff" font-size="9" font-weight="600">SIGN ME UP</text>
+    </g>
+  </g>
+
+  <!-- ============================ -->
+  <!--   MARKDOWN OUTPUT LAYER      -->
+  <!-- ============================ -->
+  <g opacity="0">
+    <animate attributeName="opacity"
+             values="0;0;0;1;1;1;0;0"
+             keyTimes="0;0.25;0.32;0.38;0.95;0.97;0.99;1"
+             dur="10s" repeatCount="indefinite"/>
+
+    <!-- Page content background (already white). Add a subtle "doc" feel with margins -->
+    <g transform="translate(140, 96)">
+      <!-- H1 -->
+      <text class="sans md-h1" x="0" y="32"><tspan class="md-syntax">#</tspan> 10 Tips for Better Web Reading</text>
+      <line x1="0" y1="46" x2="540" y2="46" stroke="#d1d9e0" stroke-width="1"/>
+
+      <!-- Lead paragraph -->
+      <text class="sans md-body" x="0" y="68">Modern websites bury articles under ads, nav bars,</text>
+      <text class="sans md-body" x="0" y="86">and sidebars. This guide collects ten quick fixes</text>
+      <text class="sans md-body" x="0" y="104">— starting with reader views and ending with</text>
+      <text class="sans md-body" x="0" y="122">tools like <tspan class="mono md-code">DeMarkup</tspan> that strip a page down to text.</text>
+
+      <!-- H2 -->
+      <text class="sans md-h2" x="0" y="156"><tspan class="md-syntax">##</tspan> The quick wins</text>
+
+      <!-- Bullet list -->
+      <text class="sans md-body" x="0" y="180"><tspan class="md-bullet">•</tspan>  Use your browser's reader view first</text>
+      <text class="sans md-body" x="0" y="200"><tspan class="md-bullet">•</tspan>  Install an ad blocker (uBlock Origin)</text>
+      <text class="sans md-body" x="0" y="220"><tspan class="md-bullet">•</tspan>  Convert articles to Markdown for archiving</text>
+      <text class="sans md-body" x="0" y="240"><tspan class="md-bullet">•</tspan>  Read offline whenever possible</text>
+
+      <!-- Italic blockquote-style note -->
+      <line x1="0" y1="258" x2="3" y2="288" stroke="#d1d9e0" stroke-width="3"/>
+      <text class="sans md-muted" x="12" y="276" font-style="italic">1,247 words · 6 min read · stripped 38 nav links, 12 ads</text>
+    </g>
+  </g>
+
+  <!-- ============================ -->
+  <!--   "COPIED" TOAST             -->
+  <!-- ============================ -->
+  <g opacity="0">
+    <animate attributeName="opacity"
+             values="0;0;0;0;1;1;1;0;0"
+             keyTimes="0;0.34;0.38;0.42;0.46;0.80;0.88;0.92;1"
+             dur="10s" repeatCount="indefinite"/>
+    <animateTransform attributeName="transform" type="translate"
+                      values="528,374; 528,374; 528,348; 528,348; 528,374"
+                      keyTimes="0;0.38;0.46;0.88;0.92"
+                      dur="10s" repeatCount="indefinite"/>
+
+    <rect width="276" height="36" rx="8" class="toast-bg"/>
+    <circle cx="18" cy="18" r="9" fill="#7ee787"/>
+    <path d="M 14 18 L 17 21 L 23 14" stroke="#1f6f3a" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <text class="sans toast-text" x="36" y="23">Copied as Markdown · 1,247 words</text>
+  </g>
+
 </svg>
