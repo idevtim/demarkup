@@ -1,0 +1,137 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 340" width="820" height="340" role="img" aria-label="DeMarkup terminal animation: converting a webpage into clean Markdown">
+  <title>DeMarkup — webpage to clean Markdown</title>
+  <defs>
+    <style>
+      .term-bg { fill: #0d1117; }
+      .chrome { fill: #161b22; }
+      .border { stroke: #30363d; stroke-width: 1; fill: none; }
+      .t { font-family: 'SFMono-Regular', 'SF Mono', Menlo, Monaco, Consolas, 'Liberation Mono', monospace; font-size: 15px; }
+      .prompt { fill: #7ee787; }
+      .ok { fill: #7ee787; }
+      .out { fill: #c9d1d9; }
+      .dim { fill: #6e7681; font-size: 12px; }
+      .arrow { fill: #58a6ff; }
+      .heading { fill: #ff7b72; font-weight: 700; }
+      .em { fill: #d2a8ff; font-style: italic; }
+      .url { fill: #79c0ff; text-decoration: underline; }
+      .num { fill: #ffa657; }
+    </style>
+
+    <!-- Each line is revealed by growing the width of a clipping rectangle.
+         The full cycle is 11s. Lines type in sequence, then hold, then reset. -->
+    <clipPath id="dm-l1"><rect x="0" y="-20" height="40" width="0">
+      <animate attributeName="width"
+               values="0;350;350;350;0"
+               keyTimes="0;0.07;0.97;0.99;1"
+               dur="11s" repeatCount="indefinite"/>
+    </rect></clipPath>
+
+    <clipPath id="dm-l2"><rect x="0" y="8" height="40" width="0">
+      <animate attributeName="width"
+               values="0;0;360;360;360;0"
+               keyTimes="0;0.10;0.17;0.97;0.99;1"
+               dur="11s" repeatCount="indefinite"/>
+    </rect></clipPath>
+
+    <clipPath id="dm-l3"><rect x="0" y="36" height="40" width="0">
+      <animate attributeName="width"
+               values="0;0;470;470;470;0"
+               keyTimes="0;0.20;0.30;0.97;0.99;1"
+               dur="11s" repeatCount="indefinite"/>
+    </rect></clipPath>
+
+    <clipPath id="dm-l4"><rect x="0" y="64" height="40" width="0">
+      <animate attributeName="width"
+               values="0;0;220;220;220;0"
+               keyTimes="0;0.33;0.39;0.97;0.99;1"
+               dur="11s" repeatCount="indefinite"/>
+    </rect></clipPath>
+
+    <clipPath id="dm-l5"><rect x="0" y="112" height="40" width="0">
+      <animate attributeName="width"
+               values="0;0;330;330;330;0"
+               keyTimes="0;0.45;0.55;0.97;0.99;1"
+               dur="11s" repeatCount="indefinite"/>
+    </rect></clipPath>
+
+    <clipPath id="dm-l6"><rect x="0" y="140" height="40" width="0">
+      <animate attributeName="width"
+               values="0;0;340;340;340;0"
+               keyTimes="0;0.58;0.68;0.97;0.99;1"
+               dur="11s" repeatCount="indefinite"/>
+    </rect></clipPath>
+  </defs>
+
+  <!-- Window frame -->
+  <rect class="term-bg" width="820" height="340" rx="10"/>
+  <rect class="chrome" width="820" height="36" rx="10"/>
+  <rect class="chrome" y="26" width="820" height="10"/>
+  <rect class="border" x="0.5" y="0.5" width="819" height="339" rx="10"/>
+  <line x1="0" y1="36" x2="820" y2="36" stroke="#30363d" stroke-width="1"/>
+
+  <!-- Traffic lights -->
+  <circle cx="22" cy="18" r="6" fill="#ff5f57"/>
+  <circle cx="42" cy="18" r="6" fill="#febc2e"/>
+  <circle cx="62" cy="18" r="6" fill="#28c840"/>
+
+  <!-- Window title -->
+  <text class="t dim" x="410" y="22" text-anchor="middle">demarkup — webpage → markdown</text>
+
+  <!-- Terminal content -->
+  <g transform="translate(28, 74)">
+
+    <!-- Line 1: command -->
+    <g clip-path="url(#dm-l1)">
+      <text class="t" y="0">
+        <tspan class="prompt">$</tspan><tspan class="out" dx="6">demarkup convert </tspan><tspan class="url">https://lunopeak.com</tspan>
+      </text>
+    </g>
+
+    <!-- Line 2 -->
+    <g clip-path="url(#dm-l2)">
+      <text class="t" y="28">
+        <tspan class="ok">✓</tspan><tspan class="out" dx="6">Extracted main content (</tspan><tspan class="num">1,247</tspan><tspan class="out"> words)</tspan>
+      </text>
+    </g>
+
+    <!-- Line 3 -->
+    <g clip-path="url(#dm-l3)">
+      <text class="t" y="56">
+        <tspan class="ok">✓</tspan><tspan class="out" dx="6">Stripped </tspan><tspan class="num">38</tspan><tspan class="out"> nav links, </tspan><tspan class="num">12</tspan><tspan class="out"> ads, </tspan><tspan class="num">4</tspan><tspan class="out"> trackers</tspan>
+      </text>
+    </g>
+
+    <!-- Line 4 -->
+    <g clip-path="url(#dm-l4)">
+      <text class="t" y="84">
+        <tspan class="ok">✓</tspan><tspan class="out" dx="6">Copied to clipboard</tspan>
+      </text>
+    </g>
+
+    <!-- Separator hint -->
+    <g clip-path="url(#dm-l5)">
+      <text class="t" y="132">
+        <tspan class="arrow">›</tspan><tspan class="heading" dx="6"># The Future of Clean Reading</tspan>
+      </text>
+    </g>
+
+    <!-- Italic tagline -->
+    <g clip-path="url(#dm-l6)">
+      <text class="t" y="160">
+        <tspan class="arrow">›</tspan><tspan class="em" dx="6">Clean. Readable. Ready for LLMs.</tspan>
+      </text>
+    </g>
+
+    <!-- Blinking cursor anchored at end of final line -->
+    <rect x="316" y="148" width="9" height="16" fill="#c9d1d9">
+      <animate attributeName="opacity"
+               values="0;0;1;1;0;1;0;1;0;1;0"
+               keyTimes="0;0.68;0.70;0.74;0.78;0.82;0.86;0.90;0.94;0.98;1"
+               dur="11s" repeatCount="indefinite"/>
+    </rect>
+
+  </g>
+
+  <!-- Subtle footer hint -->
+  <text class="t dim" x="410" y="320" text-anchor="middle">⌘⇧M  ·  one-click conversion  ·  privacy-first  ·  no external APIs</text>
+</svg>

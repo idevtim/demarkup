@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="images/header.svg" alt="DeMarkup — convert any webpage into clean Markdown" width="820">
+</p>
+
 # DeMarkup
 
 A Chrome extension that converts any webpage into clean, well-structured Markdown and copies it to your clipboard.
