@@ -17,7 +17,7 @@ A Chrome extension (Manifest V3) that converts webpages to clean Markdown using 
 - All conversion logic lives in `content/content.js`; keep it self-contained
 - User preferences stored via `chrome.storage.sync`
 - No external API calls — everything runs locally in the browser
-- Permissions are minimal: `activeTab`, `clipboardWrite`, `storage`, `contextMenus`
+- Permissions are minimal: `activeTab`, `clipboardWrite`, `storage`, `contextMenus`, `scripting`
 
 ## Key Decisions
 

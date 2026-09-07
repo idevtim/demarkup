@@ -98,7 +98,15 @@ demarkup/
 - [turndown-plugin-gfm](https://github.com/mixmark-io/turndown-plugin-gfm) for tables and strikethrough
 - No build step — plain JS, HTML, CSS loaded directly by Chrome
 - No external API calls — everything runs in-browser
-- Permissions: `activeTab`, `clipboardWrite`, `storage`, `contextMenus`
+- Permissions: `activeTab`, `clipboardWrite`, `storage`, `contextMenus`, `scripting`
+
+## Privacy
+
+DeMarkup collects nothing. No analytics, no telemetry, no network requests —
+conversion happens entirely in your browser, and page content goes only to your
+clipboard or a file you download.
+
+See [PRIVACY.md](PRIVACY.md) for the full policy.
 
 ## Contributing
 
