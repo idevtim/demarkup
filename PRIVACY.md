@@ -56,8 +56,9 @@ Sharing it is entirely your decision.
 - No collection of personally identifiable information
 - No sale or transfer of data to third parties
 
-The Markdown conversion library (Turndown) is bundled inside the extension
-package rather than loaded from a CDN, so no third party observes your usage.
+The Markdown conversion library (Turndown) and the fonts used in the interface
+are bundled inside the extension package rather than loaded from a CDN, so no
+third party — Google Fonts included — is contacted when you use DeMarkup.
 
 ## Permissions
 

@@ -115,3 +115,6 @@ Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup and 
 ## License
 
 [MIT](LICENSE)
+
+The bundled fonts (DM Sans, Instrument Serif) are redistributed under the SIL
+Open Font License — see [fonts/LICENSE.md](fonts/LICENSE.md).
