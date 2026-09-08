@@ -6,7 +6,7 @@
 
 A Chrome extension that converts any webpage into clean, well-structured Markdown and copies it to your clipboard.
 
-**[Download latest release](https://github.com/idevtim/demarkup/releases/latest)**
+**[Install from the Chrome Web Store](https://chromewebstore.google.com/detail/demarkup/dmajejnedpjiecfnpmmemkgnkideecfg)** · [Download latest release](https://github.com/idevtim/demarkup/releases/latest)
 
 ![DeMarkup popup](images/screenshot.png)
 
@@ -28,7 +28,7 @@ A Chrome extension that converts any webpage into clean, well-structured Markdow
 
 ### Chrome Web Store (recommended)
 
-Coming soon.
+[Install DeMarkup](https://chromewebstore.google.com/detail/demarkup/dmajejnedpjiecfnpmmemkgnkideecfg) from the Chrome Web Store, then pin the extension to your toolbar.
 
 ### Load unpacked (development)
 
